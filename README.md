@@ -4,7 +4,18 @@ So you just bought a new Raspberry Pi and you want to set it up as a web server?
 
 Congrats, you're in the right place. You're only 9 steps away from Raspberry Pi-Node-Mongo goodness, and two of those steps are optional. Let's get started.
 
-## Step 1: Install Raspbian onto SD Card
+## Steps
+1. [Install Raspbian onto SD Card](#step-1)
+2. [Boot from USB (optional)](#step-2)
+3. [Initial Configuration](#step-3)
+4. [Internal Networking](#step-4)
+5. [Install all the things](#step-5)
+6. [Get your code, Run your code](#step-6)
+7. [Proxy requests with nginx](#step-7)
+8. [Make your web server available from ... the web.](#step-8)
+9. [Enable SSL like a boss (optional)](#step-9)
+
+## <a name="step-1"></a> Step 1: Install Raspbian onto SD Card
 On your development machine, [Download Raspbian Lite](https://www.raspberrypi.org/downloads/raspbian/). Unzip that file to get the `.img`.
 
 If your dev machine is Windows or Linux, you can lookup [directions online](https://www.raspberrypi.org/documentation/installation/installing-images/README.md).
@@ -33,8 +44,8 @@ Now plug that SD card, a montior and a keyboard into your Raspberry Pi, power it
 
 *Note* - By default Raspbian ships with the British keyboard layout, which makes some keys hard to find. If you can't find the `|` character, ensure Num Lock is on, hold alt, then press 1,2,4 on the keypad.
 
-## Step 2:  Boot from USB (optional)
-If your paranoid about the write limits of SD cards over time, or have been burned by a corupted SD card one too many times, you can instruct your Pi to boot from a USB flash drive instead. If you're not worried about this, skip ahead to Step 3.
+## <a name="step-2"></a>Step 2:  Boot from USB (optional)
+If your paranoid about the write limits of SD cards over time, or have been burned by a corupted SD card one too many times, you can instruct your Pi to boot from a USB flash drive instead. If you're not worried about this, skip ahead to [Step 3](#step-3).
 
 If you have a Raspberry Pi 3, there are [new instructions](https://www.raspberrypi.org/documentation/hardware/raspberrypi/bootmodes/msd.md) on how to accomplish this. The cool thing about this, is that after following those steps, you can remove the SD and boot entirely from USB. Pretty cool.
 
@@ -52,13 +63,13 @@ vcgencmd otp_dump | grep 17:
 
 If that outputs `17:3020000a`, congrats, you win.
 
-Now you need to add Raspbian to your USB drive. On your dev machine, repeat Step 1, only with the USB drive, not the SD card. Once that finishes up, shutdown the Raspberry Pi (`sudo shutdown -h now`), eject the SD card, insert your USB drive and plug her in.
+Now you need to add Raspbian to your USB drive. On your dev machine, repeat [Step 1](#step-1), only with the USB drive, not the SD card. Once that finishes up, shutdown the Raspberry Pi (`sudo shutdown -h now`), eject the SD card, insert your USB drive and plug her in.
 
 If all went as planned your Pi should startup as normal after 5-10 seconds and you're now done with the SD card for good!
 
 If you have a Pi older than 3, you can still run your server off of a USB stick, but you'll still need the SD card for booting up. Instructions for that can be [found here](http://jonathanmh.com/boot-raspberry-pi-from-a-usb-stick/).
 
-## Step 3) Initial Configuration
+## <a name="step-3"></a> Step 3) Initial Configuration
 Using `sudo raspi-config`, change hostname, enable SSH, wait for network on boot, reduce GPU to 16MB.
 
 Optionally, you can edit the message that appears in the terminal when you first log in. I like to add some [ascii art](http://patorjk.com/software/taag/) to match the Pi's host name. To do so, run:
@@ -81,7 +92,7 @@ Login with the user and password you just created. After you've confirmed your n
 sudo deluser pi
 ```
 
-## Step 4) Internal Networking
+## <a name="step-4"></a> Step 4) Internal Networking
 You can plug your Pi via ethernet cable to your router or setup Wifi.
 
 To connect to Wifi: `sudo nano /etc/wpa_supplicant/wpa_supplicant.conf`. Add the following:
@@ -126,7 +137,7 @@ ssh api@192.168.0.200
 ```
 Use the password you set when you created the new user.
 
-## Step 5) Install all the things:
+## <a name="step-5"></a> Step 5) Install all the things:
 
 Pull in reference to Node v6 (latest LTS version). Change version digit in the URL if you want a different version (https://deb.nodesource.com/setup_7.x for example)
 ```
@@ -320,7 +331,7 @@ sudo mv ./* /usr/bin
 ```
 Mongo 3 on your Raspi 3. Boomshakalaka.
 
-## Step 6) Get your code, Run your code
+## <a name="step-6"></a> Step 6) Get your code, Run your code
 Generate SSH Key
 ```
 ssh-keygen -f ~/.ssh/id_rsa -C "id_rsa"
@@ -366,7 +377,7 @@ Your app should now be available to any computer on your local network. You can 
 
 and you'll see your app running (where the IP is the static internal IP address you assinged the PI, and the port is port your Node.js code is litening on).
 
-## Step 7) Proxy requests with nginx
+## <a name="step-7"></a> Step 7) Proxy requests with nginx
 You're node app most likely isn't running on port 80. It turns out it's kind of a pain to get node servers to directly listen on port 80. Enter nginx.
 
 Add new nginx site block:
@@ -412,7 +423,7 @@ sudo service nginx reload
 
 You can edit the hosts file (/etc/hosts) on your dev machine to point your newly added domain name to your Raspberry Pi's static internal IP to test your nginx config.
 
-## Step 8) Make your web server available from ... the web.
+## <a name="step-8"></a> Step 8) Make your web server available from ... the web.
 
 If you don't have a static IP from your internet provider (not sure? Odds are you don't), you'll need to use a Dynamic DNS service.
 
@@ -465,7 +476,7 @@ Once that change is saved and propogates, you should be able to access your Node
 
 [node-is-cool.myawesomedomain.com](http://node-is-cool.myawesomedomain.com)
 
-### Step 9) Enable SSL like a boss (optional)
+### <a name="step-9"></a> Step 9) Enable SSL like a boss (optional)
 Let's Encrypt makes enabling https free and relatively easy. You're already this deep in. Why stop now? [Link](https://www.linuxbabe.com/linux-server/install-lets-encrypt-free-tlsssl-certificate-nginx-debian-8-server)
 
 ```
