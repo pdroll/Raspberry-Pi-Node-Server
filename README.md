@@ -14,6 +14,7 @@ Congrats, you're in the right place. You're only 9 steps away from Raspberry Pi-
 7. [Proxy requests with nginx](#step-7)
 8. [Make your web server available from ... the web.](#step-8)
 9. [Enable SSL like a boss (optional)](#step-9)
+10. [Step 10: BONUS! Control GPIO pins with Node.js](#step-10)
 
 ## <a name="step-1"></a> Step 1: Install Raspbian onto SD Card
 On your development machine, [Download Raspbian Lite](https://www.raspberrypi.org/downloads/raspbian/). Unzip that file to get the `.img`.
@@ -407,6 +408,7 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_max_temp_file_size 0;
         proxy_redirect off;
         proxy_read_timeout 240s;
@@ -602,6 +604,7 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_max_temp_file_size 0;
         proxy_redirect off;
         proxy_read_timeout 240s;
@@ -624,6 +627,59 @@ If all good, reload nginx:
 
 ```
 sudo service nginx reload
+```
+
+## <a name="step-10"></a> Step 10: BONUS! Control GPIO pins with Node.js
+One of the best things about using a Raspberry Pi is the ability to interact with the physical world using the [General Purpose Input/Output pins](https://www.raspberrypi.org/documentation/usage/gpio-plus-and-raspi2/). The RasPi 3 has 40 pins, 28 of which are programmable. You can wire these into buttons, switchs, relays, servos, sensors, etc to do any sort of cool thing you can dream up. [pinout.xyz/](https://pinout.xyz/) is a great resource to find out which pins do what.
+
+There exist lots of Node.js libraries to help interact with these pins, but few are kept up to date and work with the latest RasPi models and newest versions of Node. However I found the [RPIO](https://www.npmjs.com/package/rpio) package library and it is fantastic. It has an easy-to-understand interface, is super performant, and supports pretty much all RasPi models and most Node.js versions, including 6.x and 7.x.
+
+To use it in your Node.js app run:
+
+```
+yarn add rpio
+```
+
+Before you can you use the library in your Node.js app, you'll need to make sure the user running the Node script has the correct permissions.
+
+Add the your user to the `gpio` group:
+
+```
+sudo usermod -a -G gpio USERNAME
+```
+
+And add a file to tell the interface to trust the `gpio` group:
+
+```
+sudo nano /etc/udev/rules.d/20-gpiomem.rules
+```
+
+and paste in:
+
+```
+SUBSYSTEM=="bcm2835-gpiomem", KERNEL=="gpiomem", GROUP="gpio", MODE="0660"
+```
+
+After restarting the Pi, you are ready to start controlling the pins with your app.
+
+Include the library in your javascript file:
+
+```
+const rpio = require('rpio');
+```
+
+Setting a pin as output and toggling it to high is as easy:
+
+```
+rpio.open(12, rpio.OUTPUT, rpio.LOW);
+rpio.write(12, rpio.HIGH);
+```
+
+And reading the state of an input pin is just as easy:
+
+```
+rpio.open(15, rpio.INPUT);
+const state = rpio.read(15);
 ```
 
 ## You did it!
