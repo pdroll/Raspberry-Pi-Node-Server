@@ -739,7 +739,7 @@ Also change this line:
 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken';
 ```
 
-to list whatever response headers your app is setting which will be needed by the
+to list whatever response headers your app is setting which will be needed by the javascript apps calling your API.
 
 Checkout this [annotated config file](https://gist.github.com/algal/5480916) to learn more about each of the additions we're making.
 
