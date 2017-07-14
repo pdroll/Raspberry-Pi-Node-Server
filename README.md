@@ -707,7 +707,7 @@ server {
         if ($cors = "truenormal") {
             add_header 'Access-Control-Allow-Origin' "$http_origin";
             add_header 'Access-Control-Allow-Credentials' 'true';
-            add_header 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken, server-timing';
+            add_header 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken';
         }
 
         if ($cors = "trueoptions") {
@@ -732,6 +732,14 @@ if ($http_origin ~* (^https?://.*\.example\.com$|^https?://localhost:\d+$)) {
 ```
 
 to use a regex for whatever domains you want to whitelist. In this example, we're allowing requests from any subdomain on `example.com` and requests from `localhost` on any port number, both on either `http` or `https`.
+
+Also change this line:
+
+```
+'Access-Control-Expose-Headers' 'accesstoken, refreshtoken';
+```
+
+to list whatever response headers your app is setting which will be needed by the
 
 Checkout this [annotated config file](https://gist.github.com/algal/5480916) to learn more about each of the additions we're making.
 
