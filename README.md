@@ -2,7 +2,7 @@
 
 So you just bought a new Raspberry Pi and you want to set it up as a web server? And you want to use Node.js? And have access to MongoDB?
 
-Congrats, you're in the right place. You're only 9 steps away from Raspberry Pi-Node-Mongo goodness, and two of those steps are optional. Let's get started.
+Congrats, you're in the right place. You're only 10 steps away from Raspberry Pi-Node-Mongo goodness, and three of those steps are optional. Let's get started.
 
 ## Steps
 1. [Install Raspbian onto SD Card](#step-1)
@@ -14,7 +14,8 @@ Congrats, you're in the right place. You're only 9 steps away from Raspberry Pi-
 7. [Proxy requests with nginx](#step-7)
 8. [Make your web server available from ... the web.](#step-8)
 9. [Enable SSL like a boss (optional)](#step-9)
-10. [Step 10: BONUS! Control GPIO pins with Node.js](#step-10)
+10. [Enable Cross Origin Requests (optional)](#step-10)
+11. [Step 11: BONUS! Control GPIO pins with Node.js](#step-11)
 
 ## <a name="step-1"></a> Step 1: Install Raspbian onto SD Card
 On your development machine, [Download Raspbian Lite](https://www.raspberrypi.org/downloads/raspbian/). Unzip that file to get the `.img`.
@@ -629,7 +630,112 @@ If all good, reload nginx:
 sudo service nginx reload
 ```
 
-## <a name="step-10"></a> Step 10: BONUS! Control GPIO pins with Node.js
+## <a name="step-10"></a> Step 10: Enable Cross Origin Requests (optional)
+
+If you're app is an API that will be called via ajax on other domains, we'll need to adjust our nginx site config to tell browsers that we know what we're doing.
+
+```
+sudo nano /etc/nginx/site-available/{APP_NAME}
+```
+Delete everything and paste in the following:
+
+```
+upstream {APP_NAME} {
+    server 127.0.0.1:3111;
+    keepalive 64;
+}
+
+server {
+    listen 80;
+    server_name {DOMAIN_NAME};
+    return 301 https://$host$request_uri;
+}
+
+server {
+
+    listen 443 ssl http2;
+
+    server_name {DOMAIN_NAME};
+
+    ssl_certificate /etc/letsencrypt/live/{DOMAIN_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{DOMAIN_NAME}/privkey.pem;
+
+    include snippets/ssl-params.conf;
+
+    location / {
+        proxy_pass http://{APP_NAME}/;
+        proxy_http_version 1.1;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_max_temp_file_size 0;
+        proxy_redirect off;
+        proxy_read_timeout 240s;
+
+        if ($http_origin ~* (^https?://.*\.example\.com$|^https?://localhost:\d+$)) {
+            set $cors "true";
+        }
+
+        # See https://gist.github.com/algal/5480916
+        # for CORS setup
+        # OPTIONS indicates a CORS pre-flight request
+        if ($request_method = 'OPTIONS') {
+            set $cors "${cors}options";
+        }
+
+        # non-OPTIONS indicates a normal CORS request
+        if ($request_method = 'GET') {
+            set $cors "${cors}normal";
+        }
+        if ($request_method = 'PUT') {
+            set $cors "${cors}normal";
+        }
+        if ($request_method = 'PATCH') {
+            set $cors "${cors}normal";
+        }
+        if ($request_method = 'DELETE') {
+            set $cors "${cors}normal";
+        }
+        if ($request_method = 'POST') {
+            set $cors "${cors}normal";
+        }
+
+        # if it's a normal request, set the standard CORS responses header
+        if ($cors = "truenormal") {
+            add_header 'Access-Control-Allow-Origin' "$http_origin";
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken, server-timing';
+        }
+
+        if ($cors = "trueoptions") {
+            add_header 'Access-Control-Allow-Origin' "$http_origin";
+            add_header 'Access-Control-Allow-Credentials' 'true';
+
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Access-Control-Allow-Methods' 'GET, PUT, PATCH, DELETE, POST, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since';
+
+            add_header 'Content-Length' 0;
+            add_header 'Content-Type' 'text/plain charset=UTF-8';
+            return 204;
+        }
+    }
+}
+```
+
+Change the following line:
+```
+if ($http_origin ~* (^https?://.*\.example\.com$|^https?://localhost:\d+$)) {
+```
+
+to use a regex for whatever domains you want to whitelist. In this example, we're allowing requests from any subdomain on `example.com` and requests from `localhost` on any port number, both on either `http` or `https`.
+
+Checkout this [annotated config file](https://gist.github.com/algal/5480916) to learn more about each of the additions we're making.
+
+## <a name="step-11"></a> Step 11: BONUS! Control GPIO pins with Node.js
 One of the best things about using a Raspberry Pi is the ability to interact with the physical world using the [General Purpose Input/Output pins](https://www.raspberrypi.org/documentation/usage/gpio-plus-and-raspi2/). The RasPi 3 has 40 pins, 28 of which are programmable. You can wire these into buttons, switchs, relays, servos, sensors, etc to do any sort of cool thing you can dream up. [pinout.xyz/](https://pinout.xyz/) is a great resource to find out which pins do what.
 
 There exist lots of Node.js libraries to help interact with these pins, but few are kept up to date and work with the latest RasPi models and newest versions of Node. However I found the [RPIO](https://www.npmjs.com/package/rpio) package library and it is fantastic. It has an easy-to-understand interface, is super performant, and supports pretty much all RasPi models and most Node.js versions, including 6.x and 7.x.
