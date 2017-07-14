@@ -641,7 +641,7 @@ Delete everything and paste in the following:
 
 ```
 upstream {APP_NAME} {
-    server 127.0.0.1:3111;
+    server 127.0.0.1:{NODE_APP_PORT};
     keepalive 64;
 }
 
