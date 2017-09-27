@@ -705,9 +705,9 @@ server {
 
         # if it's a normal request, set the standard CORS responses header
         if ($cors = "truenormal") {
-            add_header 'Access-Control-Allow-Origin' "$http_origin";
-            add_header 'Access-Control-Allow-Credentials' 'true';
-            add_header 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken';
+            add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Expose-Headers' 'accesstoken, refreshtoken' always;
         }
 
         if ($cors = "trueoptions") {
